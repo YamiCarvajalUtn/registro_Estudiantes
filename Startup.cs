@@ -22,7 +22,6 @@ namespace registroEstudiantes
         {
             Configuration = configuration;
         }
-
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -36,19 +35,24 @@ namespace registroEstudiantes
             });
             services.AddDbContext<registroEstudiantesContext>(options => 
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-
-
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
+                 
+                    
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-
+            // services.AddDefaultIdentity<IdentityUser>()
+            //   .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddIdentity<ApplicationUser, ApplicationRole>(options => options.Stores.MaxLengthForKeys = 128)
+                    .AddEntityFrameworkStores<ApplicationDbContext>()
+                    .AddDefaultUI().AddDefaultTokenProviders();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env ,
+                              ApplicationDbContext context, 
+                              RoleManager<ApplicationRole> roleManager,
+                              UserManager<ApplicationUser> userManager)
         {
             if (env.IsDevelopment())
             {
@@ -73,6 +77,8 @@ namespace registroEstudiantes
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            DummyData.Initialize(context, userManager, roleManager).Wait();
         }
     }
 }
